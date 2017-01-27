@@ -14,7 +14,7 @@ class Board {
       .map(n => new Block(n));
 
     let board = blocks.slice(1);
-    board.unshift(new Block());
+    board.push(new Block());
     board.sort(() => 0.5 - Math.random()); // shuffle board
 
     let _board = Array.from({length: rowSize}).map(e => []);
@@ -32,19 +32,33 @@ class Board {
 
   _handleClick (block) {
     const { emptyBlock } = this;
-    console.log('clicked', block, emptyBlock);
+    const { x, y } = block;
+    const xE = emptyBlock.x, yE = emptyBlock.y;
+    // console.log('clicked', block, emptyBlock);
 
     if (block.isNeighborOf(emptyBlock)) {
-      const { x, y } = block;
+      this.board[y][x] = emptyBlock.setPosition(x, y);
+      this.board[yE][xE] = block.setPosition(xE, yE);
 
-      this.board[y][x] = emptyBlock;
-      this.board[emptyBlock.y][emptyBlock.x] = block;
-      block.setPosition(emptyBlock.x, emptyBlock.y);
-      emptyBlock.setPosition(x, y);
+      this.isDirty = true;
+    } else if (block.isSameRow(emptyBlock)) {
+      console.log('same row!', emptyBlock, block);
+      // this.board[y][x] = emptyBlock;
 
-      console.log('redraw!', this.board);
+
+      this.isDirty = true;
+    } else if (block.isSameColumn(emptyBlock)) {
+      console.log('same col!', block);
+      // this.board[y][x] = emptyBlock;
+
       this.isDirty = true;
     }
+  }
+
+  checkWin () {
+    return this.board
+             .reduce((a, b) => a.concat(b))
+             .every((b, i) => b.num === i + 1 || b.num === null);
   }
 
   render () {
@@ -52,14 +66,20 @@ class Board {
     let len = this.rowSize * 150;
     d.style.height = d.style.width = `${len}px`;
     d.setAttribute('class', 'board');
+    let e = null;
 
     this.board
       .reduce((a, b) => a.concat(b))
       .forEach(block => {
         let b = block.render();
+        if (block.num === null) e = b;
         b.addEventListener('click', () => this._handleClick(block));
         d.appendChild(b);
       });
+
+    if (this.checkWin()) {
+      e.textContent = 'You win!';
+    }
 
     return d;
   }
@@ -67,38 +87,45 @@ class Board {
 
 class Block {
 
-  constructor (num = null) {
+  constructor (num = null, x = 0, y = 0) {
     this.num = num;
-  }
-
-  setPosition (x = 0, y = 0) {
     this.x = x;
     this.y = y;
   }
 
-  isAbove (block) {
-    const { x, y } = block;
+  setPosition (x, y) {
+    this.x = x;
+    this.y = y;
+    return this;
+  }
+
+  isAbove ({x, y}) {
     return this.x === x && this.y === y + 1;
   }
 
-  isBelow (block) {
-    const { x, y } = block;
+  isBelow ({x, y}) {
     return this.x === x && this.y === y - 1;
   }
 
-  isLeftOf (block) {
-    const { x, y } = block;
+  isLeftOf ({x, y}) {
     return this.x === x + 1 && this.y === y;
   }
 
-  isRightOf (block) {
-    const { x, y } = block;
+  isRightOf ({x, y}) {
     return this.x === x - 1 && this.y === y;
   }
 
   isNeighborOf (block) {
     return this.isAbove(block) || this.isBelow(block)
         || this.isLeftOf(block) || this.isRightOf(block);
+  }
+
+  isSameRow ({y}) {
+    return this.y === y;
+  }
+
+  isSameColumn ({x}) {
+    return this.x === x;
   }
 
   render () {
@@ -122,8 +149,3 @@ setInterval(() => {
     board.isDirty = false;
   }
 }, 100);
-
-// var d = new Block();
-// var d1 = new Block(1);
-// document.getElementById('game').appendChild(d.render());
-// document.getElementById('game').appendChild(d1.render());

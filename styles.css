@@ -25,6 +25,17 @@
 }
 
 .empty-block {
-  opacity: 0;
+  color: black;
   border: solid 1px white;
+  font-size: 30px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.win-text {
+  margin-top: 15px;
+  text-align: center;
+  font-size: 40px;
 }
